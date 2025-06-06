@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salud y Vida - Productos Naturales</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="logo-container">
+                <img src="logo.png" alt="Salud y Vida Logo" class="logo">
+            </div>
+            <nav>
+                <ul class="menu">
+                    <li><a href="#inicio">Inicio</a></li>
+                    <li><a href="#productos">Productos</a></li>
+                    <li><a href="#nosotros">Nosotros</a></li>
+                    <li><a href="#contacto">Contacto</a></li>
+                </ul>
+            </nav>
+            <div class="header-actions">
+                <div class="cart-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count">0</span>
+                </div>
+                <!-- Botón discreto para admin -->
+                <div class="admin-access" title="Acceso Administrativo">
+                    <i class="fas fa-user-shield" id="admin-btn"></i>
+                </div>
+            </div>
+            <div class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- Admin Login Modal (Solo aparece cuando se hace clic en el botón admin) -->
+    <div class="modal" id="adminLoginModal">
+        <div class="modal-content admin-login-content">
+            <span class="close-modal">&times;</span>
+            <div class="admin-login-header">
+                <i class="fas fa-shield-alt"></i>
+                <h2>Acceso Administrativo</h2>
+                <p>Solo para personal autorizado</p>
+            </div>
+            <form id="admin-login-form">
+                <div class="form-group">
+                    <label for="admin-username">Usuario</label>
+                    <input type="text" id="admin-username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="admin-password">Contraseña</label>
+                    <input type="password" id="admin-password" name="password" required>
+                </div>
+                <div id="admin-login-error" class="error-message"></div>
+                <button type="submit" class="btn admin-login-btn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Iniciar Sesión
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard Modal (Se muestra después del login exitoso) -->
+    <div class="modal admin-dashboard-modal" id="adminDashboardModal">
+        <div class="modal-content admin-dashboard-content">
+            <div class="admin-header">
+                <div class="admin-title">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <h2>Panel Administrativo</h2>
+                </div>
+                <div class="admin-actions">
+                    <span class="admin-user">Bienvenido, <span id="admin-username-display"></span></span>
+                    <button class="btn-secondary" id="admin-logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Cerrar Sesión
+                    </button>
+                    <span class="close-modal admin-close">&times;</span>
+                </div>
+            </div>
+            
+            <div class="admin-tabs">
+                <button class="tab-btn active" data-tab="orders">
+                    <i class="fas fa-shopping-bag"></i>
+                    Pedidos
+                </button>
+                <button class="tab-btn" data-tab="products">
+                    <i class="fas fa-box"></i>
+                    Productos
+                </button>
+                <button class="tab-btn" data-tab="stats">
+                    <i class="fas fa-chart-bar"></i>
+                    Estadísticas
+                </button>
+            </div>
+            
+            <!-- Orders Tab -->
+            <div id="orders-tab" class="tab-content active">
+                <div class="admin-section-header">
+                    <h3><i class="fas fa-shopping-bag"></i> Gestión de Pedidos</h3>
+                    <div class="order-filters">
+                        <select id="order-status-filter">
+                            <option value="all">Todos los estados</option>
+                            <option value="pending">Pendiente de pago</option>
+                            <option value="paid">Pagado</option>
+                            <option value="shipped">Enviado</option>
+                            <option value="delivered">Entregado</option>
+                        </select>
+                        <input type="text" id="order-search" placeholder="Buscar por nombre o número">
+                    </div>
+                </div>
+                <div class="orders-table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Nº Pedido</th>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-table-body">
+                            <!-- Orders will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Products Tab -->
+            <div id="products-tab" class="tab-content">
+                <div class="admin-section-header">
+                    <h3><i class="fas fa-box"></i> Gestión de Productos</h3>
+                    <div class="product-actions">
+                        <button id="add-product-btn" class="btn">
+                            <i class="fas fa-plus"></i>
+                            Agregar Producto
+                        </button>
+                        <div class="product-filters">
+                            <select id="product-category-filter">
+                                <option value="all">Todas las categorías</option>
+                                <option value="vitaminas">Vitaminas</option>
+                                <option value="suplementos">Suplementos</option>
+                                <option value="hierbas">Hierbas Medicinales</option>
+                            </select>
+                            <input type="text" id="product-search" placeholder="Buscar producto">
+                        </div>
+                    </div>
+                </div>
+                <div class="products-table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Imagen</th>
+                                <th>Nombre</th>
+                                <th>Categoría</th>
+                                <th>Precio</th>
+                                <th>Stock</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-table-body">
+                            <!-- Products will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Stats Tab -->
+            <div id="stats-tab" class="tab-content">
+                <div class="admin-section-header">
+                    <h3><i class="fas fa-chart-bar"></i> Estadísticas</h3>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h4>Total Pedidos</h4>
+                            <p class="stat-number" id="total-orders">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h4>Ventas Totales</h4>
+                            <p class="stat-number" id="total-sales">$0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h4>Productos</h4>
+                            <p class="stat-number" id="total-products">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h4>Stock Bajo</h4>
+                            <p class="stat-number" id="low-stock">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="product-modal-title">Agregar Nuevo Producto</h2>
+            <form id="product-form">
+                <input type="hidden" id="product-id">
+                <div class="form-group">
+                    <label for="product-name">Nombre del Producto</label>
+                    <input type="text" id="product-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-category">Categoría</label>
+                    <select id="product-category" required>
+                        <option value="vitaminas">Vitaminas</option>
+                        <option value="suplementos">Suplementos</option>
+                        <option value="hierbas">Hierbas Medicinales</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="product-price">Precio</label>
+                    <input type="number" id="product-price" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-stock">Stock</label>
+                    <input type="number" id="product-stock" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-description">Descripción</label>
+                    <textarea id="product-description" rows="4" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="product-image">URL de la Imagen</label>
+                    <input type="text" id="product-image" placeholder="URL de la imagen o dejar en blanco para imagen predeterminada">
+                </div>
+                <button type="submit" class="btn" id="save-product-btn">Guardar Producto</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Order Detail Modal -->
+    <div class="modal" id="orderDetailModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Detalles del Pedido <span id="order-detail-number"></span></h2>
+            <div class="order-detail-content">
+                <div class="order-customer-info">
+                    <h3>Información del Cliente</h3>
+                    <p><strong>Nombre:</strong> <span id="order-customer-name"></span></p>
+                    <p><strong>Teléfono:</strong> <span id="order-customer-phone"></span></p>
+                    <p><strong>Dirección:</strong> <span id="order-customer-address"></span></p>
+                </div>
+                
+                <div class="order-payment-info">
+                    <h3>Información de Pago</h3>
+                    <p><strong>Método:</strong> <span id="order-payment-method"></span></p>
+                    <p><strong>Estado:</strong> <span id="order-payment-status"></span></p>
+                    <p id="order-confirmation-container"><strong>Confirmación:</strong> <span id="order-confirmation-number"></span></p>
+                </div>
+                
+                <div class="order-items-list">
+                    <h3>Productos</h3>
+                    <table class="order-items-table">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Cantidad</th>
+                                <th>Precio</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="order-items-body">
+                            <!-- Order items will be loaded here -->
+                        </tbody>
+                    </table>
+                    <div class="order-total">
+                        <p><strong>Total:</strong> $<span id="order-detail-total"></span></p>
+                    </div>
+                </div>
+                
+                <div class="order-status-update">
+                    <h3>Actualizar Estado</h3>
+                    <div class="form-group">
+                        <label for="order-status">Estado del Pedido</label>
+                        <select id="order-status">
+                            <option value="pending">Pendiente de pago</option>
+                            <option value="paid">Pagado</option>
+                            <option value="shipped">Enviado</option>
+                            <option value="delivered">Entregado</option>
+                        </select>
+                    </div>
+                    <button class="btn" id="update-order-status-btn">Actualizar Estado</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Sidebar -->
+    <div class="cart-sidebar">
+        <div class="cart-header">
+            <h3>Tu Carrito</h3>
+            <button class="close-cart"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="cart-items">
+            <!-- Cart items will be added here dynamically -->
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <p>Total: $<span id="cart-total-amount">0</span></p>
+            </div>
+            <button class="checkout-btn">Proceder al Pago</button>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section id="inicio" class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Distribuidora de Productos Naturales</h1>
+                <h2>SALUD Y VIDA</h2>
+                <p>Venta de productos naturales de los mejores laboratorios nacionales e importados</p>
+                <a href="#productos" class="btn">Ver Productos</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <div class="feature">
+                <i class="fas fa-leaf"></i>
+                <h3>100% Natural</h3>
+                <p>Productos de origen natural para tu bienestar</p>
+            </div>
+            <div class="feature">
+                <i class="fas fa-truck"></i>
+                <h3>Envío a Domicilio</h3>
+                <p>Entrega rápida en Sincelejo y envios nacionales contraentrega </p>
+            </div>
+            <div class="feature">
+                <i class="fas fa-credit-card"></i>
+                <h3>Pagos Seguros</h3>
+                <p>Múltiples métodos de pago</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section id="productos" class="products">
+        <div class="container">
+            <h2 class="section-title">Nuestros Productos</h2>
+            
+            <div class="categories">
+                <button class="category-btn active" data-category="all">Todos</button>
+                <button class="category-btn" data-category="vitaminas">Vitaminas</button>
+                <button class="category-btn" data-category="suplementos">Suplementos</button>
+                <button class="category-btn" data-category="hierbas">Hierbas Medicinales</button>
+            </div>
+            
+            <div class="products-grid">
+                <!-- Products will be added here dynamically -->
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="nosotros" class="about">
+        <div class="container">
+            <div class="about-content">
+                <h2 class="section-title">Sobre Nosotros</h2>
+                <p>En <strong>Salud y Vida</strong>, nos dedicamos a ofrecer los mejores productos naturales para mejorar tu calidad de vida. Ubicados en Sincelejo, contamos con una amplia variedad de productos de los mejores laboratorios nacionales e importados.</p>
+                <p>Nuestra misión es promover un estilo de vida saludable a través de productos naturales de alta calidad, brindando asesoría personalizada a cada uno de nuestros clientes.</p>
+            </div>
+            <div class="about-image">
+                <img src="/Logo_saludyvida.png" alt="Nuestra Tienda">
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials">
+        <div class="container">
+            <h2 class="section-title">Lo que dicen nuestros clientes</h2>
+            <div class="testimonials-slider">
+                <div class="testimonial">
+                    <div class="testimonial-text">
+                        <p>"Los productos de Salud y Vida han mejorado mi calidad de vida. Excelente atención y asesoría."</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <p>- María Gómez</p>
+                    </div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-text">
+                        <p>"Encontré todos los suplementos que necesitaba a precios muy accesibles. Recomendado."</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <p>- Carlos Rodríguez</p>
+                    </div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-text">
+                        <p>"La variedad de productos naturales es impresionante. Siempre encuentro lo que busco."</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <p>- Ana Martínez</p>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-dots">
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contacto" class="contact">
+        <div class="container">
+            <h2 class="section-title">Contáctanos</h2>
+            <div class="contact-container">
+                <div class="contact-info">
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <p>cra 23 #23-07, Centro Sincelejo, Sucre, Colombia</p>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-phone"></i>
+                        <p>300 272 7399</p>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-envelope"></i>
+                        <p>lesterpaternina@hotmail.com</p>
+                    </div>
+                    <div class="social-media">
+                        <a href="#" class="social-icon"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+                <div class="contact-form">
+                    <form id="contactForm">
+                        <div class="form-group">
+                            <input type="text" id="name" name="name" placeholder="Nombre" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="email" id="email" name="email" placeholder="Correo Electrónico" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="tel" id="phone" name="phone" placeholder="Teléfono">
+                        </div>
+                        <div class="form-group">
+                            <textarea id="message" name="message" placeholder="Mensaje" required></textarea>
+                        </div>
+                        <button type="submit" class="btn">Enviar Mensaje</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Checkout Modal -->
+    <div class="modal" id="checkoutModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Finalizar Compra</h2>
+            <div class="checkout-form">
+                <div class="form-group">
+                    <label for="fullname">Nombre Completo</label>
+                    <input type="text" id="fullname" name="fullname" required>
+                </div>
+                <div class="form-group">
+                    <label for="address">Dirección de Entrega</label>
+                    <input type="text" id="address" name="address" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Teléfono</label>
+                    <input type="tel" id="checkout-phone" name="phone" required>
+                </div>
+                <div class="form-group">
+                    <label for="payment">Método de Pago</label>
+                    <select id="payment" name="payment" required>
+                        <option value="">Seleccione un método de pago</option>
+                        <option value="nequi">Nequi</option>
+                        <option value="bancolombia">Bancolombia</option>
+                        <option value="efectivo">Efectivo (Contra entrega)</option>
+                    </select>
+                </div>
+                <div class="payment-details" id="nequiDetails">
+                    <p>Nequi: 300 272 7399</p>
+                    <div class="form-group">
+                        <label for="nequi-confirmation">Número de confirmación</label>
+                        <input type="text" id="nequi-confirmation" name="nequi-confirmation">
+                    </div>
+                </div>
+                <div class="payment-details" id="bancolombiaDetails">
+                    <p>Bancolombia: Cuenta Ahorros 123-456789-00</p>
+                    <div class="form-group">
+                        <label for="bancolombia-confirmation">Número de confirmación</label>
+                        <input type="text" id="bancolombia-confirmation" name="bancolombia-confirmation">
+                    </div>
+                </div>
+                <div class="order-summary">
+                    <h3>Resumen del Pedido</h3>
+                    <div class="order-items">
+                        <!-- Order items will be added here dynamically -->
+                    </div>
+                    <div class="order-total">
+                        <p>Total: $<span id="order-total-amount">0</span></p>
+                    </div>
+                </div>
+                <button type="submit" class="btn" id="placeOrderBtn">Realizar Pedido</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Confirmation Modal -->
+    <div class="modal" id="confirmationModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="confirmation-message">
+                <i class="fas fa-check-circle"></i>
+                <h2>¡Pedido Realizado con Éxito!</h2>
+                <p>Gracias por tu compra. Hemos recibido tu pedido y nos pondremos en contacto contigo pronto.</p>
+                <p>Número de pedido: <span id="orderNumber"></span></p>
+                <button class="btn" id="continueShoppingBtn">Continuar Comprando</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay"></div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="logo.png" alt="Salud y Vida Logo">
+                    <p>Distribuidora de Productos Naturales</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Enlaces Rápidos</h4>
+                    <ul>
+                        <li><a href="#inicio">Inicio</a></li>
+                        <li><a href="#productos">Productos</a></li>
+                        <li><a href="#nosotros">Nosotros</a></li>
+                        <li><a href="#contacto">Contacto</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h4>Contáctanos</h4>
+                    <p><i class="fas fa-map-marker-alt"></i> Sincelejo, Sucre, Colombia</p>
+                    <p><i class="fas fa-phone"></i> 300 272 7399 / 312 607 3546</p>
+                    <p><i class="fas fa-envelope"></i> info@saludyvida.com</p>
+                </div>
+                <div class="footer-newsletter">
+                    <h4>Suscríbete a nuestro boletín</h4>
+                    <form id="newsletterForm">
+                        <input type="email" placeholder="Tu correo electrónico" required>
+                        <button type="submit"><i class="fas fa-paper-plane"></i></button>
+                    </form>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Salud y Vida - Todos los derechos reservados</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
