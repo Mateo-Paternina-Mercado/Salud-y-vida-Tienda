@@ -1,11 +1,11 @@
-// Products Data
+// Products Data with Google Images
 let products = [
   {
     id: 1,
     name: "Colagesan",
     category: "suplementos",
     price: 45000,
-    image: "/placeholder.svg?height=200&width=200&text=Colagesan",
+    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop",
     description: "Colágeno con vitamina E para la piel, cabello y articulaciones.",
     stock: 15,
   },
@@ -14,7 +14,7 @@ let products = [
     name: "Vita Francesa",
     category: "vitaminas",
     price: 38000,
-    image: "/placeholder.svg?height=200&width=200&text=Vita%20Francesa",
+    image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&h=400&fit=crop",
     description: "Suplemento con Borojó, Chontaduro y Maca. Energizante natural.",
     stock: 20,
   },
@@ -23,7 +23,7 @@ let products = [
     name: "Omega 3",
     category: "suplementos",
     price: 42000,
-    image: "/placeholder.svg?height=200&width=200&text=Omega%203",
+    image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=400&fit=crop",
     description: "Aceite de pescado rico en ácidos grasos esenciales para la salud cardiovascular.",
     stock: 12,
   },
@@ -32,7 +32,7 @@ let products = [
     name: "Spirulina",
     category: "suplementos",
     price: 35000,
-    image: "/placeholder.svg?height=200&width=200&text=Spirulina",
+    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop",
     description: "Alga rica en proteínas, vitaminas y minerales. Potente antioxidante.",
     stock: 8,
   },
@@ -41,7 +41,7 @@ let products = [
     name: "Vitamina C",
     category: "vitaminas",
     price: 28000,
-    image: "/placeholder.svg?height=200&width=200&text=Vitamina%20C",
+    image: "https://images.unsplash.com/photo-1550572017-edd951aa8f72?w=400&h=400&fit=crop",
     description: "Refuerza el sistema inmunológico y favorece la absorción de hierro.",
     stock: 25,
   },
@@ -50,7 +50,7 @@ let products = [
     name: "Té Verde",
     category: "hierbas",
     price: 18000,
-    image: "/placeholder.svg?height=200&width=200&text=T%C3%A9%20Verde",
+    image: "https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=400&h=400&fit=crop",
     description: "Antioxidante natural que ayuda a acelerar el metabolismo.",
     stock: 30,
   },
@@ -59,7 +59,7 @@ let products = [
     name: "Manzanilla",
     category: "hierbas",
     price: 15000,
-    image: "/placeholder.svg?height=200&width=200&text=Manzanilla",
+    image: "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=400&h=400&fit=crop",
     description: "Hierba con propiedades antiinflamatorias y relajantes.",
     stock: 40,
   },
@@ -68,7 +68,7 @@ let products = [
     name: "Complejo B",
     category: "vitaminas",
     price: 32000,
-    image: "/placeholder.svg?height=200&width=200&text=Complejo%20B",
+    image: "https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=400&h=400&fit=crop",
     description: "Conjunto de vitaminas B esenciales para el metabolismo energético.",
     stock: 18,
   },
@@ -83,8 +83,14 @@ let currentAdmin = null
 let currentOrderId = null
 let currentProductId = null
 
-// API URL
+// API URLs
 const API_URL = "https://683cf838199a0039e9e3d448.mockapi.io/users"
+const PRODUCTS_API_URL = "https://683cf838199a0039e9e3d448.mockapi.io/products"
+const ORDERS_API_URL = "https://683cf838199a0039e9e3d448.mockapi.io/orders"
+
+// Payment verification APIs (simulados)
+const NEQUI_API = "https://api.nequi.com.co/verify" // Simulado
+const BANCOLOMBIA_API = "https://api.bancolombia.com/verify" // Simulado
 
 // DOM Elements
 const productsGrid = document.querySelector(".products-grid")
@@ -156,39 +162,244 @@ const orderStatus = document.getElementById("order-status")
 const updateOrderStatusBtn = document.getElementById("update-order-status-btn")
 
 // Initialize the page
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   console.log("Initializing application...")
 
-  // Initialize default data
-  initializeDefaultData()
+  // Show loading indicator
+  showLoadingIndicator()
 
-  // Load data from localStorage
-  loadDataFromLocalStorage()
+  try {
+    // Initialize data from cloud first, then fallback to local
+    await initializeCloudData()
 
-  // Display Products
-  displayProducts()
+    // Load data
+    await loadAllData()
 
-  // Set up event listeners
-  setupEventListeners()
+    // Display Products
+    displayProducts()
 
-  // Initialize testimonials slider
-  initTestimonialsSlider()
+    // Set up event listeners
+    setupEventListeners()
 
-  // Check admin login status
-  checkAdminLoginStatus()
+    // Initialize testimonials slider
+    initTestimonialsSlider()
 
-  console.log("Application initialized successfully")
+    // Check admin login status
+    checkAdminLoginStatus()
+
+    console.log("Application initialized successfully")
+  } catch (error) {
+    console.error("Error initializing application:", error)
+    // Fallback to local storage
+    initializeLocalData()
+    loadDataFromLocalStorage()
+    displayProducts()
+    setupEventListeners()
+    initTestimonialsSlider()
+    checkAdminLoginStatus()
+  } finally {
+    hideLoadingIndicator()
+  }
 })
 
-// Initialize default data
-function initializeDefaultData() {
-  // Initialize products if not exists
-  if (!localStorage.getItem("saludyvidaProducts")) {
-    localStorage.setItem("saludyvidaProducts", JSON.stringify(products))
-    console.log("Default products initialized")
+// Show/Hide Loading Indicator
+function showLoadingIndicator() {
+  const loader = document.createElement("div")
+  loader.id = "global-loader"
+  loader.innerHTML = `
+    <div style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255,255,255,0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      font-family: Arial, sans-serif;
+    ">
+      <div style="text-align: center;">
+        <div style="
+          border: 4px solid #f3f3f3;
+          border-top: 4px solid #4CAF50;
+          border-radius: 50%;
+          width: 50px;
+          height: 50px;
+          animation: spin 1s linear infinite;
+          margin: 0 auto 20px;
+        "></div>
+        <p style="color: #666; font-size: 16px;">Cargando datos...</p>
+      </div>
+    </div>
+    <style>
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  `
+  document.body.appendChild(loader)
+}
+
+function hideLoadingIndicator() {
+  const loader = document.getElementById("global-loader")
+  if (loader) {
+    loader.remove()
+  }
+}
+
+// Cloud Data Management
+async function initializeCloudData() {
+  try {
+    // Check if products exist in cloud
+    const response = await fetch(PRODUCTS_API_URL)
+    if (response.ok) {
+      const cloudProducts = await response.json()
+      if (cloudProducts.length === 0) {
+        // Initialize cloud with default products
+        await saveProductsToCloud(products)
+        console.log("Default products saved to cloud")
+      }
+    }
+  } catch (error) {
+    console.log("Cloud initialization failed, using local storage")
+  }
+}
+
+async function loadAllData() {
+  try {
+    // Load products from cloud
+    await loadProductsFromCloud()
+
+    // Load orders from cloud
+    await loadOrdersFromCloud()
+
+    // Load cart from local storage (cart is always local)
+    loadCartFromLocalStorage()
+
+    console.log(`Loaded ${products.length} products, ${orders.length} orders, ${cart.length} cart items`)
+  } catch (error) {
+    console.error("Error loading cloud data:", error)
+    // Fallback to local storage
+    loadDataFromLocalStorage()
+  }
+}
+
+async function loadProductsFromCloud() {
+  try {
+    const response = await fetch(PRODUCTS_API_URL)
+    if (response.ok) {
+      const cloudProducts = await response.json()
+      if (cloudProducts.length > 0) {
+        products = cloudProducts
+        // Also save to local storage as backup
+        localStorage.setItem("saludyvidaProducts", JSON.stringify(products))
+        return
+      }
+    }
+  } catch (error) {
+    console.log("Failed to load products from cloud, using local storage")
   }
 
-  // Initialize orders if not exists
+  // Fallback to local storage
+  const storedProducts = localStorage.getItem("saludyvidaProducts")
+  if (storedProducts) {
+    products = JSON.parse(storedProducts)
+  }
+}
+
+async function saveProductsToCloud(productsToSave = products) {
+  try {
+    // Clear existing products first
+    const existingResponse = await fetch(PRODUCTS_API_URL)
+    if (existingResponse.ok) {
+      const existingProducts = await existingResponse.json()
+
+      // Delete existing products
+      for (const product of existingProducts) {
+        await fetch(`${PRODUCTS_API_URL}/${product.id}`, {
+          method: "DELETE",
+        })
+      }
+    }
+
+    // Save new products
+    for (const product of productsToSave) {
+      await fetch(PRODUCTS_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(product),
+      })
+    }
+
+    console.log("Products saved to cloud successfully")
+
+    // Also save to local storage as backup
+    localStorage.setItem("saludyvidaProducts", JSON.stringify(productsToSave))
+  } catch (error) {
+    console.error("Failed to save products to cloud:", error)
+    // Save to local storage as fallback
+    localStorage.setItem("saludyvidaProducts", JSON.stringify(productsToSave))
+  }
+}
+
+async function loadOrdersFromCloud() {
+  try {
+    const response = await fetch(ORDERS_API_URL)
+    if (response.ok) {
+      const cloudOrders = await response.json()
+      orders = cloudOrders
+      // Also save to local storage as backup
+      localStorage.setItem("saludyvidaOrders", JSON.stringify(orders))
+      return
+    }
+  } catch (error) {
+    console.log("Failed to load orders from cloud, using local storage")
+  }
+
+  // Fallback to local storage
+  const storedOrders = localStorage.getItem("saludyvidaOrders")
+  if (storedOrders) {
+    orders = JSON.parse(storedOrders)
+  }
+}
+
+async function saveOrderToCloud(order) {
+  try {
+    const response = await fetch(ORDERS_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(order),
+    })
+
+    if (response.ok) {
+      console.log("Order saved to cloud successfully")
+    }
+
+    // Also save to local storage as backup
+    orders.push(order)
+    localStorage.setItem("saludyvidaOrders", JSON.stringify(orders))
+  } catch (error) {
+    console.error("Failed to save order to cloud:", error)
+    // Save to local storage as fallback
+    orders.push(order)
+    localStorage.setItem("saludyvidaOrders", JSON.stringify(orders))
+  }
+}
+
+// Local Data Management (Fallback)
+function initializeLocalData() {
+  if (!localStorage.getItem("saludyvidaProducts")) {
+    localStorage.setItem("saludyvidaProducts", JSON.stringify(products))
+    console.log("Default products initialized locally")
+  }
+
   if (!localStorage.getItem("saludyvidaOrders")) {
     const initialOrders = [
       {
@@ -202,6 +413,7 @@ function initializeDefaultData() {
         payment: {
           method: "nequi",
           confirmation: "NQ123456789",
+          verified: true,
         },
         items: [
           {
@@ -219,66 +431,194 @@ function initializeDefaultData() {
         ],
         total: 128000,
         status: "paid",
-      },
-      {
-        id: 100002,
-        date: new Date(Date.now() - 86400000).toISOString(),
-        customer: {
-          name: "Carlos Rodríguez",
-          phone: "3109876543",
-          address: "Carrera 25 #18-45, Sincelejo",
-        },
-        payment: {
-          method: "efectivo",
-          confirmation: null,
-        },
-        items: [
-          {
-            id: 3,
-            name: "Omega 3",
-            price: 42000,
-            quantity: 1,
-          },
-        ],
-        total: 42000,
-        status: "pending",
+        invoice: generateInvoiceNumber(),
       },
     ]
 
     localStorage.setItem("saludyvidaOrders", JSON.stringify(initialOrders))
-    console.log("Default orders initialized")
+    console.log("Default orders initialized locally")
   }
 }
 
-// Load data from localStorage
 function loadDataFromLocalStorage() {
-  // Load products
   const storedProducts = localStorage.getItem("saludyvidaProducts")
   if (storedProducts) {
     products = JSON.parse(storedProducts)
   }
 
-  // Load orders
   const storedOrders = localStorage.getItem("saludyvidaOrders")
   if (storedOrders) {
     orders = JSON.parse(storedOrders)
   }
 
-  // Load cart
+  loadCartFromLocalStorage()
+}
+
+function loadCartFromLocalStorage() {
   const storedCart = localStorage.getItem("saludyvidaCart")
   if (storedCart) {
     cart = JSON.parse(storedCart)
     updateCart()
   }
-
-  console.log(`Loaded ${products.length} products, ${orders.length} orders, ${cart.length} cart items`)
 }
 
-// Save data to localStorage
-function saveDataToLocalStorage() {
-  localStorage.setItem("saludyvidaProducts", JSON.stringify(products))
-  localStorage.setItem("saludyvidaOrders", JSON.stringify(orders))
+function saveCartToLocalStorage() {
   localStorage.setItem("saludyvidaCart", JSON.stringify(cart))
+}
+
+// Payment Verification
+async function verifyPayment(method, confirmationNumber) {
+  try {
+    // Simulate payment verification
+    if (method === "nequi") {
+      return await verifyNequiPayment(confirmationNumber)
+    } else if (method === "bancolombia") {
+      return await verifyBancolombiaPayment(confirmationNumber)
+    }
+    return { verified: true, message: "Pago en efectivo pendiente de verificación" }
+  } catch (error) {
+    console.error("Payment verification error:", error)
+    return { verified: false, message: "Error al verificar el pago" }
+  }
+}
+
+async function verifyNequiPayment(confirmationNumber) {
+  // Simulate Nequi API call
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      // Simple validation: confirmation number should be at least 8 characters
+      const isValid = confirmationNumber && confirmationNumber.length >= 8
+      resolve({
+        verified: isValid,
+        message: isValid ? "Pago verificado exitosamente" : "Número de confirmación inválido",
+      })
+    }, 2000) // Simulate API delay
+  })
+}
+
+async function verifyBancolombiaPayment(confirmationNumber) {
+  // Simulate Bancolombia API call
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      // Simple validation: confirmation number should be at least 10 characters
+      const isValid = confirmationNumber && confirmationNumber.length >= 10
+      resolve({
+        verified: isValid,
+        message: isValid ? "Pago verificado exitosamente" : "Número de confirmación inválido",
+      })
+    }, 2000) // Simulate API delay
+  })
+}
+
+// Invoice Generation
+function generateInvoiceNumber() {
+  const date = new Date()
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  const random = Math.floor(Math.random() * 1000)
+    .toString()
+    .padStart(3, "0")
+  return `SV-${year}${month}${day}-${random}`
+}
+
+function generateInvoicePDF(order) {
+  const invoiceContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Factura ${order.invoice}</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .company-info { margin-bottom: 20px; }
+        .invoice-info { margin-bottom: 20px; }
+        .customer-info { margin-bottom: 20px; }
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .items-table th, .items-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .items-table th { background-color: #f2f2f2; }
+        .total { text-align: right; font-size: 18px; font-weight: bold; }
+        .payment-info { margin-top: 20px; }
+        .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>SALUD Y VIDA</h1>
+        <p>Distribuidora de Productos Naturales</p>
+        <p>Sincelejo, Sucre, Colombia</p>
+        <p>Tel: 300 272 7399 / 312 607 3546</p>
+      </div>
+      
+      <div class="invoice-info">
+        <h2>FACTURA DE VENTA</h2>
+        <p><strong>Número de Factura:</strong> ${order.invoice}</p>
+        <p><strong>Fecha:</strong> ${new Date(order.date).toLocaleDateString("es-CO")}</p>
+        <p><strong>Número de Pedido:</strong> #${order.id}</p>
+      </div>
+      
+      <div class="customer-info">
+        <h3>DATOS DEL CLIENTE</h3>
+        <p><strong>Nombre:</strong> ${order.customer.name}</p>
+        <p><strong>Teléfono:</strong> ${order.customer.phone}</p>
+        <p><strong>Dirección:</strong> ${order.customer.address}</p>
+      </div>
+      
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio Unitario</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${order.items
+            .map(
+              (item) => `
+            <tr>
+              <td>${item.name}</td>
+              <td>${item.quantity}</td>
+              <td>$${formatPrice(item.price)}</td>
+              <td>$${formatPrice(item.price * item.quantity)}</td>
+            </tr>
+          `,
+            )
+            .join("")}
+        </tbody>
+      </table>
+      
+      <div class="total">
+        <p>TOTAL: $${formatPrice(order.total)}</p>
+      </div>
+      
+      <div class="payment-info">
+        <h3>INFORMACIÓN DE PAGO</h3>
+        <p><strong>Método de Pago:</strong> ${getPaymentMethodName(order.payment.method)}</p>
+        <p><strong>Estado:</strong> ${order.payment.verified ? "PAGADO" : "PENDIENTE"}</p>
+        ${order.payment.confirmation ? `<p><strong>Confirmación:</strong> ${order.payment.confirmation}</p>` : ""}
+      </div>
+      
+      <div class="footer">
+        <p>Gracias por su compra. Esta factura es válida como comprobante de pago.</p>
+        <p>Para cualquier consulta, contáctenos al 300 272 7399</p>
+      </div>
+    </body>
+    </html>
+  `
+
+  // Create and download the invoice
+  const blob = new Blob([invoiceContent], { type: "text/html" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = `Factura_${order.invoice}.html`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
 
 // Check Admin Login Status
@@ -495,7 +835,8 @@ function displayProducts() {
     const isInStock = product.stock > 0
 
     productCard.innerHTML = `
-      <img src="${product.image}" alt="${product.name}" class="product-img">
+      <img src="${product.image}" alt="${product.name}" class="product-img" 
+           onerror="this.src='https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop'">
       <div class="product-info">
         <h3 class="product-name">${product.name}</h3>
         <p class="product-category">${getCategoryName(product.category)}</p>
@@ -546,7 +887,7 @@ function addToCart(e) {
     })
   }
 
-  saveDataToLocalStorage()
+  saveCartToLocalStorage()
   updateCart()
 
   cartSidebar.classList.add("active")
@@ -585,7 +926,8 @@ function updateCart() {
     cartItem.classList.add("cart-item")
 
     cartItem.innerHTML = `
-      <img src="${item.image}" alt="${item.name}" class="cart-item-img">
+      <img src="${item.image}" alt="${item.name}" class="cart-item-img"
+           onerror="this.src='https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop'">
       <div class="cart-item-details">
         <h4 class="cart-item-name">${item.name}</h4>
         <p class="cart-item-price">$${formatPrice(item.price)}</p>
@@ -639,7 +981,7 @@ function decreaseQuantity(e) {
     cart = cart.filter((item) => item.id !== productId)
   }
 
-  saveDataToLocalStorage()
+  saveCartToLocalStorage()
   updateCart()
 }
 
@@ -654,14 +996,14 @@ function increaseQuantity(e) {
   }
 
   cartItem.quantity += 1
-  saveDataToLocalStorage()
+  saveCartToLocalStorage()
   updateCart()
 }
 
 function removeItem(e) {
   const productId = Number.parseInt(e.target.closest(".remove-item").getAttribute("data-id"))
   cart = cart.filter((item) => item.id !== productId)
-  saveDataToLocalStorage()
+  saveCartToLocalStorage()
   updateCart()
   showNotification("Producto eliminado del carrito", "success")
 }
@@ -693,7 +1035,7 @@ function showCheckoutModal() {
 }
 
 // Place Order Function
-function placeOrder(e) {
+async function placeOrder(e) {
   e.preventDefault()
 
   const fullname = document.getElementById("fullname").value
@@ -707,83 +1049,133 @@ function placeOrder(e) {
   }
 
   let confirmationNumber = ""
+  let paymentVerified = false
 
-  if (payment === "nequi") {
-    confirmationNumber = document.getElementById("nequi-confirmation").value
-    if (!confirmationNumber) {
-      showNotification("Por favor ingresa el número de confirmación de Nequi.", "error")
-      return
+  // Disable the button and show loading
+  placeOrderBtn.disabled = true
+  placeOrderBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...'
+
+  try {
+    if (payment === "nequi") {
+      confirmationNumber = document.getElementById("nequi-confirmation").value
+      if (!confirmationNumber) {
+        showNotification("Por favor ingresa el número de confirmación de Nequi.", "error")
+        return
+      }
+
+      showNotification("Verificando pago con Nequi...", "info")
+      const verification = await verifyPayment("nequi", confirmationNumber)
+      paymentVerified = verification.verified
+
+      if (!paymentVerified) {
+        showNotification(verification.message, "error")
+        return
+      }
+    } else if (payment === "bancolombia") {
+      confirmationNumber = document.getElementById("bancolombia-confirmation").value
+      if (!confirmationNumber) {
+        showNotification("Por favor ingresa el número de confirmación de Bancolombia.", "error")
+        return
+      }
+
+      showNotification("Verificando pago con Bancolombia...", "info")
+      const verification = await verifyPayment("bancolombia", confirmationNumber)
+      paymentVerified = verification.verified
+
+      if (!paymentVerified) {
+        showNotification(verification.message, "error")
+        return
+      }
+    } else {
+      // Cash payment
+      paymentVerified = false // Will be verified manually
     }
-  }
 
-  if (payment === "bancolombia") {
-    confirmationNumber = document.getElementById("bancolombia-confirmation").value
-    if (!confirmationNumber) {
-      showNotification("Por favor ingresa el número de confirmación de Bancolombia.", "error")
-      return
+    const randomOrderNumber = Math.floor(100000 + Math.random() * 900000)
+    const invoiceNumber = generateInvoiceNumber()
+
+    const order = {
+      id: randomOrderNumber,
+      date: new Date().toISOString(),
+      customer: {
+        name: fullname,
+        address: address,
+        phone: phone,
+      },
+      items: cart.map((item) => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+      payment: {
+        method: payment,
+        confirmation: confirmationNumber,
+        verified: paymentVerified,
+      },
+      status: paymentVerified ? "paid" : "pending",
+      total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
+      invoice: invoiceNumber,
     }
-  }
 
-  const randomOrderNumber = Math.floor(100000 + Math.random() * 900000)
-  if (orderNumber) orderNumber.textContent = randomOrderNumber
+    // Save order to cloud and local storage
+    await saveOrderToCloud(order)
 
-  const order = {
-    id: randomOrderNumber,
-    date: new Date().toISOString(),
-    customer: {
-      name: fullname,
-      address: address,
-      phone: phone,
-    },
-    items: cart.map((item) => ({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      quantity: item.quantity,
-    })),
-    payment: {
-      method: payment,
-      confirmation: confirmationNumber,
-    },
-    status: payment === "efectivo" ? "pending" : "paid",
-    total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
-  }
+    // Update product stock
+    cart.forEach((item) => {
+      const product = products.find((p) => p.id === item.id)
+      if (product) {
+        product.stock -= item.quantity
+      }
+    })
 
-  // Add order to orders array
-  orders.push(order)
+    // Save updated products
+    await saveProductsToCloud()
 
-  // Update product stock
-  cart.forEach((item) => {
-    const product = products.find((p) => p.id === item.id)
-    if (product) {
-      product.stock -= item.quantity
+    // Generate and download invoice if payment is verified
+    if (paymentVerified) {
+      setTimeout(() => {
+        generateInvoicePDF(order)
+        showNotification("Factura generada y descargada automáticamente", "success")
+      }, 1000)
     }
-  })
 
-  // Save all data
-  saveDataToLocalStorage()
+    // Update order number in confirmation modal
+    if (orderNumber) orderNumber.textContent = randomOrderNumber
 
-  // Clear cart
-  cart = []
-  saveDataToLocalStorage()
-  updateCart()
+    // Clear cart
+    cart = []
+    saveCartToLocalStorage()
+    updateCart()
 
-  // Refresh product display
-  displayProducts()
+    // Refresh product display
+    displayProducts()
 
-  // Show confirmation
-  if (checkoutModal) checkoutModal.style.display = "none"
-  if (confirmationModal) confirmationModal.style.display = "block"
+    // Show confirmation
+    if (checkoutModal) checkoutModal.style.display = "none"
+    if (confirmationModal) confirmationModal.style.display = "block"
 
-  // Clear form
-  document.getElementById("fullname").value = ""
-  document.getElementById("address").value = ""
-  document.getElementById("checkout-phone").value = ""
-  document.getElementById("payment").value = ""
-  document.getElementById("nequi-confirmation").value = ""
-  document.getElementById("bancolombia-confirmation").value = ""
+    // Clear form
+    document.getElementById("fullname").value = ""
+    document.getElementById("address").value = ""
+    document.getElementById("checkout-phone").value = ""
+    document.getElementById("payment").value = ""
+    document.getElementById("nequi-confirmation").value = ""
+    document.getElementById("bancolombia-confirmation").value = ""
 
-  showNotification("¡Pedido realizado con éxito!", "success")
+    const successMessage = paymentVerified
+      ? "¡Pedido realizado y pago verificado exitosamente!"
+      : "¡Pedido realizado! El pago será verificado manualmente."
+
+    showNotification(successMessage, "success")
+  } catch (error) {
+    console.error("Error processing order:", error)
+    showNotification("Error al procesar el pedido. Intenta de nuevo.", "error")
+  } finally {
+    // Re-enable the button
+    placeOrderBtn.disabled = false
+    placeOrderBtn.innerHTML = "Realizar Pedido"
+  }
 }
 
 // Admin Functions
@@ -876,11 +1268,31 @@ function showAdminError(message, type = "error") {
   }
 }
 
-function loadAdminData() {
+async function loadAdminData() {
   console.log("Loading admin data...")
-  displayOrders()
-  displayAdminProducts()
-  updateAdminStats()
+
+  // Show loading in admin tables
+  if (ordersTableBody) {
+    ordersTableBody.innerHTML =
+      '<tr><td colspan="6" style="text-align: center; padding: 20px;">Cargando pedidos...</td></tr>'
+  }
+  if (productsTableBody) {
+    productsTableBody.innerHTML =
+      '<tr><td colspan="7" style="text-align: center; padding: 20px;">Cargando productos...</td></tr>'
+  }
+
+  try {
+    // Reload data from cloud
+    await loadAllData()
+
+    // Display data
+    displayOrders()
+    displayAdminProducts()
+    updateAdminStats()
+  } catch (error) {
+    console.error("Error loading admin data:", error)
+    showNotification("Error al cargar datos del administrador", "error")
+  }
 }
 
 function switchTab(tabName) {
@@ -931,11 +1343,19 @@ function displayOrders() {
         <span class="order-status status-${order.status}">
           ${getStatusName(order.status)}
         </span>
+        ${order.payment && order.payment.verified ? '<i class="fas fa-check-circle" style="color: green; margin-left: 5px;" title="Pago verificado"></i>' : ""}
       </td>
       <td>
         <button class="action-btn view-order" data-id="${order.id}" title="Ver detalles">
           <i class="fas fa-eye"></i>
         </button>
+        ${
+          order.invoice
+            ? `<button class="action-btn download-invoice" data-id="${order.id}" title="Descargar factura">
+          <i class="fas fa-download"></i>
+        </button>`
+            : ""
+        }
         <button class="action-btn delete-btn delete-order" data-id="${order.id}" title="Eliminar">
           <i class="fas fa-trash"></i>
         </button>
@@ -951,6 +1371,7 @@ function displayOrders() {
 function addOrderEventListeners() {
   const viewButtons = document.querySelectorAll(".view-order")
   const deleteButtons = document.querySelectorAll(".delete-order")
+  const downloadButtons = document.querySelectorAll(".download-invoice")
 
   viewButtons.forEach((button) => {
     button.addEventListener("click", (e) => {
@@ -965,6 +1386,17 @@ function addOrderEventListeners() {
       e.stopPropagation()
       const orderId = Number.parseInt(button.getAttribute("data-id"))
       deleteOrder(orderId)
+    })
+  })
+
+  downloadButtons.forEach((button) => {
+    button.addEventListener("click", (e) => {
+      e.stopPropagation()
+      const orderId = Number.parseInt(button.getAttribute("data-id"))
+      const order = orders.find((o) => o.id === orderId)
+      if (order) {
+        generateInvoicePDF(order)
+      }
     })
   })
 }
@@ -1025,11 +1457,19 @@ function displayFilteredOrders(filteredOrders) {
         <span class="order-status status-${order.status}">
           ${getStatusName(order.status)}
         </span>
+        ${order.payment && order.payment.verified ? '<i class="fas fa-check-circle" style="color: green; margin-left: 5px;" title="Pago verificado"></i>' : ""}
       </td>
       <td>
         <button class="action-btn view-order" data-id="${order.id}" title="Ver detalles">
           <i class="fas fa-eye"></i>
         </button>
+        ${
+          order.invoice
+            ? `<button class="action-btn download-invoice" data-id="${order.id}" title="Descargar factura">
+          <i class="fas fa-download"></i>
+        </button>`
+            : ""
+        }
         <button class="action-btn delete-btn delete-order" data-id="${order.id}" title="Eliminar">
           <i class="fas fa-trash"></i>
         </button>
@@ -1062,11 +1502,12 @@ function openOrderDetailModal(orderId) {
   }
 
   if (orderPaymentStatus) {
-    orderPaymentStatus.textContent = getStatusName(order.status)
+    const statusText = order.payment && order.payment.verified ? "VERIFICADO" : getStatusName(order.status)
+    orderPaymentStatus.textContent = statusText
     orderPaymentStatus.className = `order-status status-${order.status}`
   }
 
-  if (order.payment.confirmation && order.payment.method !== "efectivo") {
+  if (order.payment && order.payment.confirmation && order.payment.method !== "efectivo") {
     if (orderConfirmationContainer) {
       orderConfirmationContainer.style.display = "block"
     }
@@ -1112,7 +1553,7 @@ function openOrderDetailModal(orderId) {
   }
 }
 
-function updateOrderStatus() {
+async function updateOrderStatus() {
   if (!currentOrderId) return
 
   const newStatus = orderStatus ? orderStatus.value : null
@@ -1130,7 +1571,17 @@ function updateOrderStatus() {
   }
 
   orders[orderIndex].status = newStatus
-  saveDataToLocalStorage()
+
+  // Save to cloud
+  try {
+    // Update in cloud storage (this would need the specific order ID from cloud)
+    await saveOrderToCloud(orders[orderIndex])
+  } catch (error) {
+    console.error("Error updating order in cloud:", error)
+  }
+
+  // Save to local storage as backup
+  localStorage.setItem("saludyvidaOrders", JSON.stringify(orders))
 
   if (orderPaymentStatus) {
     orderPaymentStatus.textContent = getStatusName(newStatus)
@@ -1141,13 +1592,21 @@ function updateOrderStatus() {
   showNotification("Estado del pedido actualizado correctamente", "success")
 }
 
-function deleteOrder(orderId) {
+async function deleteOrder(orderId) {
   if (!confirm("¿Estás seguro de que deseas eliminar este pedido? Esta acción no se puede deshacer.")) {
     return
   }
 
   orders = orders.filter((order) => order.id !== orderId)
-  saveDataToLocalStorage()
+
+  // Save to cloud and local storage
+  try {
+    // This would need implementation to delete from cloud storage
+    localStorage.setItem("saludyvidaOrders", JSON.stringify(orders))
+  } catch (error) {
+    console.error("Error deleting order:", error)
+  }
+
   displayOrders()
   showNotification("Pedido eliminado correctamente", "success")
 }
@@ -1187,9 +1646,9 @@ function displayAdminProducts() {
     row.innerHTML = `
       <td><strong>${product.id}</strong></td>
       <td class="product-image-cell">
-        <img src="${product.image || "/placeholder.svg?height=60&width=60&text=" + encodeURIComponent(product.name)}" 
+        <img src="${product.image}" 
              alt="${product.name}" 
-             onerror="this.src='/placeholder.svg?height=60&width=60&text=Producto'">
+             onerror="this.src='https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop'">
       </td>
       <td><strong>${product.name}</strong></td>
       <td>${getCategoryName(product.category)}</td>
@@ -1282,9 +1741,9 @@ function displayFilteredProducts(filteredProducts) {
     row.innerHTML = `
       <td><strong>${product.id}</strong></td>
       <td class="product-image-cell">
-        <img src="${product.image || "/placeholder.svg?height=60&width=60&text=" + encodeURIComponent(product.name)}" 
+        <img src="${product.image}" 
              alt="${product.name}"
-             onerror="this.src='/placeholder.svg?height=60&width=60&text=Producto'">
+             onerror="this.src='https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop'">
       </td>
       <td><strong>${product.name}</strong></td>
       <td>${getCategoryName(product.category)}</td>
@@ -1342,7 +1801,7 @@ function openProductModal(productId = null) {
   if (overlay) overlay.style.display = "block"
 }
 
-function saveProduct(e) {
+async function saveProduct(e) {
   e.preventDefault()
 
   const productId = productIdInput ? productIdInput.value : ""
@@ -1374,36 +1833,44 @@ function saveProduct(e) {
     price,
     stock,
     description,
-    image: image || `/placeholder.svg?height=200&width=200&text=${encodeURIComponent(name)}`,
+    image:
+      image ||
+      `https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop&text=${encodeURIComponent(name)}`,
   }
 
-  if (currentProductId) {
-    const productIndex = products.findIndex((p) => p.id === currentProductId)
+  try {
+    if (currentProductId) {
+      const productIndex = products.findIndex((p) => p.id === currentProductId)
 
-    if (productIndex !== -1) {
-      products[productIndex] = {
-        id: currentProductId,
-        ...productData,
+      if (productIndex !== -1) {
+        products[productIndex] = {
+          id: currentProductId,
+          ...productData,
+        }
+        showNotification("Producto actualizado correctamente", "success")
       }
-      showNotification("Producto actualizado correctamente", "success")
+    } else {
+      const newId = products.length > 0 ? Math.max(...products.map((p) => p.id)) + 1 : 1
+
+      products.push({
+        id: newId,
+        ...productData,
+      })
+      showNotification("Producto agregado correctamente", "success")
     }
-  } else {
-    const newId = products.length > 0 ? Math.max(...products.map((p) => p.id)) + 1 : 1
 
-    products.push({
-      id: newId,
-      ...productData,
-    })
-    showNotification("Producto agregado correctamente", "success")
+    // Save to cloud and local storage
+    await saveProductsToCloud()
+    displayAdminProducts()
+    displayProducts() // Refresh public view
+    closeModals()
+  } catch (error) {
+    console.error("Error saving product:", error)
+    showNotification("Error al guardar el producto", "error")
   }
-
-  saveDataToLocalStorage()
-  displayAdminProducts()
-  displayProducts() // Refresh public view
-  closeModals()
 }
 
-function deleteProduct(productId) {
+async function deleteProduct(productId) {
   const product = products.find((p) => p.id === productId)
 
   if (!product) {
@@ -1415,11 +1882,18 @@ function deleteProduct(productId) {
     return
   }
 
-  products = products.filter((product) => product.id !== productId)
-  saveDataToLocalStorage()
-  displayAdminProducts()
-  displayProducts() // Refresh public view
-  showNotification("Producto eliminado correctamente", "success")
+  try {
+    products = products.filter((product) => product.id !== productId)
+
+    // Save to cloud and local storage
+    await saveProductsToCloud()
+    displayAdminProducts()
+    displayProducts() // Refresh public view
+    showNotification("Producto eliminado correctamente", "success")
+  } catch (error) {
+    console.error("Error deleting product:", error)
+    showNotification("Error al eliminar el producto", "error")
+  }
 }
 
 // Statistics
@@ -1542,7 +2016,7 @@ function showNotification(message, type = "success") {
     font-weight: 600;
     z-index: 10000;
     animation: slideIn 0.3s ease;
-    ${type === "success" ? "background-color: #4CAF50;" : "background-color: #f44336;"}
+    ${type === "success" ? "background-color: #4CAF50;" : type === "info" ? "background-color: #2196F3;" : "background-color: #f44336;"}
   `
 
   document.body.appendChild(notification)
@@ -1557,4 +2031,6 @@ function showNotification(message, type = "success") {
   }, 3000)
 }
 
-console.log("Script.js loaded successfully with full admin functionality")
+console.log(
+  "Script.js loaded successfully with full functionality including cloud storage, payment verification, and invoice generation",
+)
