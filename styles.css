@@ -321,6 +321,7 @@ header .container {
   display: flex;
   align-items: center;
   gap: 8px;
+  position: relative;
 }
 
 .tab-btn:hover {
@@ -330,6 +331,21 @@ header .container {
 .tab-btn.active {
   color: var(--primary-color);
   border-bottom-color: var(--primary-color);
+}
+
+.admin-chat-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: var(--secondary-color);
+  color: white;
+  font-size: 10px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .tab-content {
@@ -553,6 +569,280 @@ header .container {
   font-size: 2rem;
   font-weight: 700;
   color: var(--text-color);
+}
+
+/* Admin Chat */
+.admin-chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 400px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.admin-chat-messages {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.admin-chat-input {
+  padding: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+.admin-chat-input input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+.admin-chat-input button {
+  padding: 10px 15px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Chat Widget */
+.chat-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.chat-button:hover {
+  background-color: #388e3c;
+  transform: scale(1.1);
+}
+
+.chat-button.active {
+  background-color: var(--secondary-color);
+}
+
+.chat-notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: var(--secondary-color);
+  color: white;
+  font-size: 12px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+}
+
+.chat-window {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  width: 350px;
+  height: 500px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  display: none;
+  flex-direction: column;
+  z-index: 1001;
+  overflow: hidden;
+}
+
+.chat-window.active {
+  display: flex;
+}
+
+.chat-header {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chat-header-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chat-close {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.chat-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  background-color: #f8f9fa;
+}
+
+.chat-message {
+  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-message.user {
+  align-items: flex-end;
+}
+
+.chat-message.system {
+  align-items: flex-start;
+}
+
+.message-content {
+  max-width: 80%;
+  padding: 10px 15px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.chat-message.user .message-content {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.chat-message.system .message-content {
+  background-color: white;
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+.message-time {
+  font-size: 11px;
+  color: #666;
+  margin-top: 5px;
+  padding: 0 5px;
+}
+
+.order-tracking {
+  padding: 15px;
+  border-top: 1px solid var(--border-color);
+  background-color: #f8f9fa;
+}
+
+.tracking-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.order-tracking form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.order-tracking input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.order-tracking button {
+  padding: 8px 12px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.order-status-result {
+  font-size: 12px;
+}
+
+.order-found {
+  background-color: white;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.order-found h4 {
+  color: var(--primary-color);
+  margin-bottom: 5px;
+}
+
+.order-found p {
+  margin: 3px 0;
+}
+
+.order-status-result .error {
+  color: #f44336;
+  font-style: italic;
+}
+
+.chat-footer {
+  padding: 15px;
+  border-top: 1px solid var(--border-color);
+}
+
+.chat-input-container {
+  display: flex;
+  gap: 10px;
+}
+
+.chat-input-container input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  outline: none;
+}
+
+.chat-input-container button {
+  width: 40px;
+  height: 40px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Cart Sidebar */
@@ -1307,6 +1597,11 @@ footer {
   .order-detail-content {
     grid-template-columns: 1fr;
   }
+
+  .chat-window {
+    width: 300px;
+    height: 450px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1380,6 +1675,20 @@ footer {
   .stats-grid {
     grid-template-columns: 1fr;
   }
+
+  .chat-window {
+    width: 280px;
+    height: 400px;
+    bottom: 80px;
+    right: 10px;
+  }
+
+  .chat-button {
+    bottom: 15px;
+    right: 15px;
+    width: 50px;
+    height: 50px;
+  }
 }
 
 @media (max-width: 576px) {
@@ -1417,6 +1726,14 @@ footer {
     height: 100vh;
     margin: 0;
     border-radius: 0;
+  }
+
+  .chat-window {
+    width: calc(100vw - 20px);
+    height: 350px;
+    bottom: 70px;
+    right: 10px;
+    left: 10px;
   }
 }
 

@@ -82,11 +82,18 @@ let isAdminLoggedIn = false
 let currentAdmin = null
 let currentOrderId = null
 let currentProductId = null
+let chatMessages = []
+let unreadMessages = 0
+let lastOrderNumber = null
 
 // API URLs
 const API_URL = "https://683cf838199a0039e9e3d448.mockapi.io/users"
 const PRODUCTS_API_URL = "https://683cf838199a0039e9e3d448.mockapi.io/products"
 const ORDERS_API_URL = "https://683cf838199a0039e9e3d448.mockapi.io/orders"
+const CHAT_API_URL = "https://683cf838199a0039e9e3d448.mockapi.io/chat"
+
+// Admin email for notifications
+const ADMIN_EMAIL = "admin@saludyvida.com"
 
 // Payment verification APIs (simulados)
 const NEQUI_API = "https://api.nequi.com.co/verify" // Simulado
@@ -187,6 +194,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Check admin login status
     checkAdminLoginStatus()
 
+    // Initialize chat system
+    initializeChat()
+
     console.log("Application initialized successfully")
   } catch (error) {
     console.error("Error initializing application:", error)
@@ -197,6 +207,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     setupEventListeners()
     initTestimonialsSlider()
     checkAdminLoginStatus()
+    initializeChat()
   } finally {
     hideLoadingIndicator()
   }
@@ -276,10 +287,15 @@ async function loadAllData() {
     // Load orders from cloud
     await loadOrdersFromCloud()
 
+    // Load chat messages from cloud
+    await loadChatFromCloud()
+
     // Load cart from local storage (cart is always local)
     loadCartFromLocalStorage()
 
-    console.log(`Loaded ${products.length} products, ${orders.length} orders, ${cart.length} cart items`)
+    console.log(
+      `Loaded ${products.length} products, ${orders.length} orders, ${cart.length} cart items, ${chatMessages.length} chat messages`,
+    )
   } catch (error) {
     console.error("Error loading cloud data:", error)
     // Fallback to local storage
@@ -393,6 +409,135 @@ async function saveOrderToCloud(order) {
   }
 }
 
+async function updateOrderInCloud(order) {
+  try {
+    // Find the order in the cloud by its ID
+    const response = await fetch(`${ORDERS_API_URL}/${order.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(order),
+    })
+
+    if (response.ok) {
+      console.log("Order updated in cloud successfully")
+    }
+
+    // Update in local storage as backup
+    const orderIndex = orders.findIndex((o) => o.id === order.id)
+    if (orderIndex !== -1) {
+      orders[orderIndex] = order
+      localStorage.setItem("saludyvidaOrders", JSON.stringify(orders))
+    }
+  } catch (error) {
+    console.error("Failed to update order in cloud:", error)
+    // Update in local storage as fallback
+    const orderIndex = orders.findIndex((o) => o.id === order.id)
+    if (orderIndex !== -1) {
+      orders[orderIndex] = order
+      localStorage.setItem("saludyvidaOrders", JSON.stringify(orders))
+    }
+  }
+}
+
+// Chat System
+async function loadChatFromCloud() {
+  try {
+    const response = await fetch(CHAT_API_URL)
+    if (response.ok) {
+      const cloudChat = await response.json()
+      chatMessages = cloudChat
+      // Also save to local storage as backup
+      localStorage.setItem("saludyvidaChatMessages", JSON.stringify(chatMessages))
+
+      // Count unread messages for admin
+      if (isAdminLoggedIn) {
+        unreadMessages = chatMessages.filter((msg) => !msg.read && msg.sender === "user").length
+        updateChatNotificationBadge()
+      }
+      return
+    }
+  } catch (error) {
+    console.log("Failed to load chat from cloud, using local storage")
+  }
+
+  // Fallback to local storage
+  const storedChat = localStorage.getItem("saludyvidaChatMessages")
+  if (storedChat) {
+    chatMessages = JSON.parse(storedChat)
+
+    // Count unread messages for admin
+    if (isAdminLoggedIn) {
+      unreadMessages = chatMessages.filter((msg) => !msg.read && msg.sender === "user").length
+      updateChatNotificationBadge()
+    }
+  }
+}
+
+async function saveChatMessageToCloud(message) {
+  try {
+    const response = await fetch(CHAT_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(message),
+    })
+
+    if (response.ok) {
+      console.log("Chat message saved to cloud successfully")
+    }
+
+    // Also save to local storage as backup
+    chatMessages.push(message)
+    localStorage.setItem("saludyvidaChatMessages", JSON.stringify(chatMessages))
+  } catch (error) {
+    console.error("Failed to save chat message to cloud:", error)
+    // Save to local storage as fallback
+    chatMessages.push(message)
+    localStorage.setItem("saludyvidaChatMessages", JSON.stringify(chatMessages))
+  }
+}
+
+async function markChatMessagesAsRead() {
+  try {
+    // Update all unread messages in the cloud
+    for (const message of chatMessages) {
+      if (!message.read && message.sender === "user") {
+        message.read = true
+        await fetch(`${CHAT_API_URL}/${message.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(message),
+        })
+      }
+    }
+
+    // Update in local storage
+    localStorage.setItem("saludyvidaChatMessages", JSON.stringify(chatMessages))
+
+    // Reset unread count
+    unreadMessages = 0
+    updateChatNotificationBadge()
+  } catch (error) {
+    console.error("Failed to mark messages as read:", error)
+    // Update in local storage as fallback
+    chatMessages.forEach((msg) => {
+      if (!msg.read && msg.sender === "user") {
+        msg.read = true
+      }
+    })
+    localStorage.setItem("saludyvidaChatMessages", JSON.stringify(chatMessages))
+
+    // Reset unread count
+    unreadMessages = 0
+    updateChatNotificationBadge()
+  }
+}
+
 // Local Data Management (Fallback)
 function initializeLocalData() {
   if (!localStorage.getItem("saludyvidaProducts")) {
@@ -438,6 +583,21 @@ function initializeLocalData() {
     localStorage.setItem("saludyvidaOrders", JSON.stringify(initialOrders))
     console.log("Default orders initialized locally")
   }
+
+  if (!localStorage.getItem("saludyvidaChatMessages")) {
+    const initialChat = [
+      {
+        id: 1,
+        sender: "system",
+        message: "¡Bienvenido al chat de soporte de Salud y Vida! ¿En qué podemos ayudarte?",
+        timestamp: new Date().toISOString(),
+        read: true,
+      },
+    ]
+
+    localStorage.setItem("saludyvidaChatMessages", JSON.stringify(initialChat))
+    console.log("Default chat initialized locally")
+  }
 }
 
 function loadDataFromLocalStorage() {
@@ -449,6 +609,11 @@ function loadDataFromLocalStorage() {
   const storedOrders = localStorage.getItem("saludyvidaOrders")
   if (storedOrders) {
     orders = JSON.parse(storedOrders)
+  }
+
+  const storedChat = localStorage.getItem("saludyvidaChatMessages")
+  if (storedChat) {
+    chatMessages = JSON.parse(storedChat)
   }
 
   loadCartFromLocalStorage()
@@ -548,7 +713,7 @@ function generateInvoicePDF(order) {
         <h1>SALUD Y VIDA</h1>
         <p>Distribuidora de Productos Naturales</p>
         <p>Sincelejo, Sucre, Colombia</p>
-        <p>Tel: 300 272 7399 / 312 607 3546</p>
+        <p>Tel: 300 272 7399</p>
       </div>
       
       <div class="invoice-info">
@@ -597,7 +762,7 @@ function generateInvoicePDF(order) {
       <div class="payment-info">
         <h3>INFORMACIÓN DE PAGO</h3>
         <p><strong>Método de Pago:</strong> ${getPaymentMethodName(order.payment.method)}</p>
-        <p><strong>Estado:</strong> ${order.payment.verified ? "PAGADO" : "PENDIENTE"}</p>
+        <p><strong>Estado:</strong> ${getStatusName(order.status)}</p>
         ${order.payment.confirmation ? `<p><strong>Confirmación:</strong> ${order.payment.confirmation}</p>` : ""}
       </div>
       
@@ -816,6 +981,44 @@ function setupEventListeners() {
       }
     })
   })
+
+  // Chat button
+  const chatButton = document.getElementById("chat-button")
+  if (chatButton) {
+    chatButton.addEventListener("click", toggleChat)
+  }
+
+  // Chat close button
+  const chatClose = document.getElementById("chat-close")
+  if (chatClose) {
+    chatClose.addEventListener("click", toggleChat)
+  }
+
+  // Chat send button
+  const chatSendButton = document.getElementById("chat-send")
+  if (chatSendButton) {
+    chatSendButton.addEventListener("click", sendChatMessage)
+  }
+
+  // Chat input enter key
+  const chatInput = document.getElementById("chat-input")
+  if (chatInput) {
+    chatInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault()
+        sendChatMessage()
+      }
+    })
+  }
+
+  // Order tracking form
+  const orderTrackingForm = document.getElementById("order-tracking-form")
+  if (orderTrackingForm) {
+    orderTrackingForm.addEventListener("submit", (e) => {
+      e.preventDefault()
+      trackOrder()
+    })
+  }
 }
 
 // Display Products Function
@@ -1060,6 +1263,8 @@ async function placeOrder(e) {
       confirmationNumber = document.getElementById("nequi-confirmation").value
       if (!confirmationNumber) {
         showNotification("Por favor ingresa el número de confirmación de Nequi.", "error")
+        placeOrderBtn.disabled = false
+        placeOrderBtn.innerHTML = "Realizar Pedido"
         return
       }
 
@@ -1069,12 +1274,16 @@ async function placeOrder(e) {
 
       if (!paymentVerified) {
         showNotification(verification.message, "error")
+        placeOrderBtn.disabled = false
+        placeOrderBtn.innerHTML = "Realizar Pedido"
         return
       }
     } else if (payment === "bancolombia") {
       confirmationNumber = document.getElementById("bancolombia-confirmation").value
       if (!confirmationNumber) {
         showNotification("Por favor ingresa el número de confirmación de Bancolombia.", "error")
+        placeOrderBtn.disabled = false
+        placeOrderBtn.innerHTML = "Realizar Pedido"
         return
       }
 
@@ -1084,6 +1293,8 @@ async function placeOrder(e) {
 
       if (!paymentVerified) {
         showNotification(verification.message, "error")
+        placeOrderBtn.disabled = false
+        placeOrderBtn.innerHTML = "Realizar Pedido"
         return
       }
     } else {
@@ -1093,6 +1304,9 @@ async function placeOrder(e) {
 
     const randomOrderNumber = Math.floor(100000 + Math.random() * 900000)
     const invoiceNumber = generateInvoiceNumber()
+
+    // Store the order number for tracking
+    lastOrderNumber = randomOrderNumber
 
     const order = {
       id: randomOrderNumber,
@@ -1168,6 +1382,9 @@ async function placeOrder(e) {
       : "¡Pedido realizado! El pago será verificado manualmente."
 
     showNotification(successMessage, "success")
+
+    // Send notification to admin
+    sendAdminNotification("Nuevo pedido", `Se ha recibido un nuevo pedido #${randomOrderNumber} de ${fullname}`)
   } catch (error) {
     console.error("Error processing order:", error)
     showNotification("Error al procesar el pedido. Intenta de nuevo.", "error")
@@ -1196,6 +1413,11 @@ function showAdminDashboard() {
     }
 
     loadAdminData()
+
+    // Mark chat messages as read when admin opens dashboard
+    if (isAdminLoggedIn) {
+      markChatMessagesAsRead()
+    }
   }
 }
 
@@ -1289,6 +1511,12 @@ async function loadAdminData() {
     displayOrders()
     displayAdminProducts()
     updateAdminStats()
+
+    // Update chat notification badge
+    if (isAdminLoggedIn) {
+      unreadMessages = chatMessages.filter((msg) => !msg.read && msg.sender === "user").length
+      updateChatNotificationBadge()
+    }
   } catch (error) {
     console.error("Error loading admin data:", error)
     showNotification("Error al cargar datos del administrador", "error")
@@ -1570,18 +1798,15 @@ async function updateOrderStatus() {
     return
   }
 
+  // Update order status
   orders[orderIndex].status = newStatus
 
-  // Save to cloud
+  // Update in cloud and local storage
   try {
-    // Update in cloud storage (this would need the specific order ID from cloud)
-    await saveOrderToCloud(orders[orderIndex])
+    await updateOrderInCloud(orders[orderIndex])
   } catch (error) {
     console.error("Error updating order in cloud:", error)
   }
-
-  // Save to local storage as backup
-  localStorage.setItem("saludyvidaOrders", JSON.stringify(orders))
 
   if (orderPaymentStatus) {
     orderPaymentStatus.textContent = getStatusName(newStatus)
@@ -1590,6 +1815,14 @@ async function updateOrderStatus() {
 
   displayOrders()
   showNotification("Estado del pedido actualizado correctamente", "success")
+
+  // Generate updated invoice
+  if (orders[orderIndex].invoice) {
+    setTimeout(() => {
+      generateInvoicePDF(orders[orderIndex])
+      showNotification("Factura actualizada generada", "success")
+    }, 1000)
+  }
 }
 
 async function deleteOrder(orderId) {
@@ -1918,6 +2151,259 @@ function updateAdminStats() {
   }
 }
 
+// Chat System Functions
+function initializeChat() {
+  // Create chat widget HTML
+  const chatWidget = document.createElement("div")
+  chatWidget.innerHTML = `
+    <!-- Chat Button -->
+    <div id="chat-button" class="chat-button">
+      <i class="fas fa-comments"></i>
+      <span id="chat-notification-badge" class="chat-notification-badge" style="display: none;">0</span>
+    </div>
+
+    <!-- Chat Window -->
+    <div id="chat-window" class="chat-window">
+      <div class="chat-header">
+        <div class="chat-header-info">
+          <i class="fas fa-headset"></i>
+          <span>Soporte Salud y Vida</span>
+        </div>
+        <button id="chat-close" class="chat-close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="chat-body">
+        <div id="chat-messages" class="chat-messages">
+          <!-- Messages will be loaded here -->
+        </div>
+        
+        <!-- Order Tracking Section -->
+        <div id="order-tracking" class="order-tracking">
+          <div class="tracking-header">
+            <i class="fas fa-search"></i>
+            <span>Consultar Estado del Pedido</span>
+          </div>
+          <form id="order-tracking-form">
+            <input type="number" id="order-number-input" placeholder="Número de pedido (ej: 123456)" required>
+            <button type="submit">Consultar</button>
+          </form>
+          <div id="order-status-result" class="order-status-result"></div>
+        </div>
+      </div>
+      
+      <div class="chat-footer">
+        <div class="chat-input-container">
+          <input type="text" id="chat-input" placeholder="Escribe tu mensaje...">
+          <button id="chat-send">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  `
+
+  document.body.appendChild(chatWidget)
+
+  // Load existing messages
+  loadChatMessages()
+
+  // Update notification badge
+  updateChatNotificationBadge()
+}
+
+function toggleChat() {
+  const chatWindow = document.getElementById("chat-window")
+  const chatButton = document.getElementById("chat-button")
+
+  if (chatWindow.classList.contains("active")) {
+    chatWindow.classList.remove("active")
+    chatButton.classList.remove("active")
+  } else {
+    chatWindow.classList.add("active")
+    chatButton.classList.add("active")
+
+    // Scroll to bottom
+    const chatMessages = document.getElementById("chat-messages")
+    if (chatMessages) {
+      chatMessages.scrollTop = chatMessages.scrollHeight
+    }
+  }
+}
+
+function loadChatMessages() {
+  const chatMessagesContainer = document.getElementById("chat-messages")
+  if (!chatMessagesContainer) return
+
+  chatMessagesContainer.innerHTML = ""
+
+  chatMessages.forEach((message) => {
+    const messageElement = createChatMessageElement(message)
+    chatMessagesContainer.appendChild(messageElement)
+  })
+
+  // Scroll to bottom
+  chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight
+}
+
+function createChatMessageElement(message) {
+  const messageDiv = document.createElement("div")
+  messageDiv.className = `chat-message ${message.sender}`
+
+  const time = new Date(message.timestamp).toLocaleTimeString("es-CO", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+
+  messageDiv.innerHTML = `
+    <div class="message-content">
+      ${message.message}
+    </div>
+    <div class="message-time">${time}</div>
+  `
+
+  return messageDiv
+}
+
+async function sendChatMessage() {
+  const chatInput = document.getElementById("chat-input")
+  const message = chatInput.value.trim()
+
+  if (!message) return
+
+  const newMessage = {
+    id: Date.now(),
+    sender: "user",
+    message: message,
+    timestamp: new Date().toISOString(),
+    read: false,
+  }
+
+  // Save message
+  await saveChatMessageToCloud(newMessage)
+
+  // Clear input
+  chatInput.value = ""
+
+  // Reload messages
+  loadChatMessages()
+
+  // Send notification to admin
+  sendAdminNotification("Nuevo mensaje de chat", `Usuario: ${message}`)
+
+  // Auto-reply for common questions
+  setTimeout(() => {
+    sendAutoReply(message)
+  }, 1000)
+}
+
+async function sendAutoReply(userMessage) {
+  const lowerMessage = userMessage.toLowerCase()
+  let autoReply = null
+
+  if (lowerMessage.includes("horario") || lowerMessage.includes("hora")) {
+    autoReply = "Nuestro horario de atención es de lunes a viernes de 8:00 AM a 6:00 PM y sábados de 8:00 AM a 2:00 PM."
+  } else if (lowerMessage.includes("envío") || lowerMessage.includes("entrega")) {
+    autoReply = "Realizamos envíos a domicilio en Sincelejo. El tiempo de entrega es de 1-2 días hábiles."
+  } else if (lowerMessage.includes("pago") || lowerMessage.includes("método")) {
+    autoReply = "Aceptamos pagos por Nequi (300 272 7399), Bancolombia y efectivo contra entrega."
+  } else if (lowerMessage.includes("precio") || lowerMessage.includes("costo")) {
+    autoReply =
+      "Puedes ver todos nuestros precios en la sección de productos. ¿Hay algún producto específico que te interese?"
+  } else if (lowerMessage.includes("hola") || lowerMessage.includes("buenos") || lowerMessage.includes("buenas")) {
+    autoReply = "¡Hola! Bienvenido a Salud y Vida. ¿En qué podemos ayudarte hoy?"
+  } else {
+    autoReply =
+      "Gracias por tu mensaje. Un representante te responderá pronto. Mientras tanto, puedes consultar el estado de tu pedido usando el formulario de arriba."
+  }
+
+  if (autoReply) {
+    const systemMessage = {
+      id: Date.now() + 1,
+      sender: "system",
+      message: autoReply,
+      timestamp: new Date().toISOString(),
+      read: true,
+    }
+
+    await saveChatMessageToCloud(systemMessage)
+    loadChatMessages()
+  }
+}
+
+function trackOrder() {
+  const orderNumberInput = document.getElementById("order-number-input")
+  const orderNumber = orderNumberInput.value.trim()
+  const resultContainer = document.getElementById("order-status-result")
+
+  if (!orderNumber) {
+    resultContainer.innerHTML = '<p class="error">Por favor ingresa un número de pedido válido.</p>'
+    return
+  }
+
+  const order = orders.find((o) => o.id.toString() === orderNumber)
+
+  if (!order) {
+    resultContainer.innerHTML = '<p class="error">No se encontró ningún pedido con ese número.</p>'
+    return
+  }
+
+  const statusColor = {
+    pending: "#ff9800",
+    paid: "#4caf50",
+    shipped: "#2196f3",
+    delivered: "#8bc34a",
+  }
+
+  resultContainer.innerHTML = `
+    <div class="order-found">
+      <h4>Pedido #${order.id}</h4>
+      <p><strong>Cliente:</strong> ${order.customer.name}</p>
+      <p><strong>Fecha:</strong> ${new Date(order.date).toLocaleDateString("es-CO")}</p>
+      <p><strong>Total:</strong> $${formatPrice(order.total)}</p>
+      <p><strong>Estado:</strong> 
+        <span style="color: ${statusColor[order.status]}; font-weight: bold;">
+          ${getStatusName(order.status)}
+        </span>
+      </p>
+      <p><strong>Método de pago:</strong> ${getPaymentMethodName(order.payment.method)}</p>
+      ${order.payment.verified ? '<p style="color: green;"><i class="fas fa-check-circle"></i> Pago verificado</p>' : ""}
+    </div>
+  `
+
+  orderNumberInput.value = ""
+}
+
+function sendAdminNotification(subject, message) {
+  // Simulate sending email notification to admin
+  console.log(`Email notification sent to ${ADMIN_EMAIL}:`)
+  console.log(`Subject: ${subject}`)
+  console.log(`Message: ${message}`)
+
+  // In a real implementation, this would send an actual email
+  // For now, we'll show a notification if admin is logged in
+  if (isAdminLoggedIn) {
+    showNotification(`Nueva notificación: ${subject}`, "info")
+
+    // Update unread messages count
+    unreadMessages++
+    updateChatNotificationBadge()
+  }
+}
+
+function updateChatNotificationBadge() {
+  const badge = document.getElementById("chat-notification-badge")
+  if (badge) {
+    if (unreadMessages > 0 && isAdminLoggedIn) {
+      badge.textContent = unreadMessages
+      badge.style.display = "block"
+    } else {
+      badge.style.display = "none"
+    }
+  }
+}
+
 // Close Modals
 function closeModals() {
   if (checkoutModal) checkoutModal.style.display = "none"
@@ -2032,5 +2518,5 @@ function showNotification(message, type = "success") {
 }
 
 console.log(
-  "Script.js loaded successfully with full functionality including cloud storage, payment verification, and invoice generation",
+  "Script.js loaded successfully with full functionality including cloud storage, payment verification, invoice generation, and chat support system",
 )

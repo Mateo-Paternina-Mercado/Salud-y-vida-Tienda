@@ -96,6 +96,11 @@
                     <i class="fas fa-chart-bar"></i>
                     Estadísticas
                 </button>
+                <button class="tab-btn" data-tab="chat">
+                    <i class="fas fa-comments"></i>
+                    Chat Soporte
+                    <span id="admin-chat-badge" class="admin-chat-badge" style="display: none;">0</span>
+                </button>
             </div>
             
             <!-- Orders Tab -->
@@ -213,6 +218,24 @@
                             <h4>Stock Bajo</h4>
                             <p class="stat-number" id="low-stock">0</p>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Tab -->
+            <div id="chat-tab" class="tab-content">
+                <div class="admin-section-header">
+                    <h3><i class="fas fa-comments"></i> Chat de Soporte</h3>
+                </div>
+                <div class="admin-chat-container">
+                    <div class="admin-chat-messages" id="admin-chat-messages">
+                        <!-- Chat messages will be loaded here -->
+                    </div>
+                    <div class="admin-chat-input">
+                        <input type="text" id="admin-chat-input" placeholder="Responder al cliente...">
+                        <button id="admin-chat-send">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -356,7 +379,7 @@
             <div class="feature">
                 <i class="fas fa-truck"></i>
                 <h3>Envío a Domicilio</h3>
-                <p>Entrega rápida en Sincelejo y envios nacionales contraentrega </p>
+                <p>Entrega rápida en Sincelejo</p>
             </div>
             <div class="feature">
                 <i class="fas fa-credit-card"></i>
@@ -393,7 +416,7 @@
                 <p>Nuestra misión es promover un estilo de vida saludable a través de productos naturales de alta calidad, brindando asesoría personalizada a cada uno de nuestros clientes.</p>
             </div>
             <div class="about-image">
-                <img src="/Logo_saludyvida.png" alt="Nuestra Tienda">
+                <img src="/placeholder.svg?height=400&width=600&text=Nuestra Tienda" alt="Nuestra Tienda">
             </div>
         </div>
     </section>
@@ -444,7 +467,7 @@
                 <div class="contact-info">
                     <div class="info-item">
                         <i class="fas fa-map-marker-alt"></i>
-                        <p>cra 23 #23-07, Centro Sincelejo, Sucre, Colombia</p>
+                        <p>Sincelejo, Sucre, Colombia</p>
                     </div>
                     <div class="info-item">
                         <i class="fas fa-phone"></i>
@@ -452,7 +475,7 @@
                     </div>
                     <div class="info-item">
                         <i class="fas fa-envelope"></i>
-                        <p>lesterpaternina@hotmail.com</p>
+                        <p>info@saludyvida.com</p>
                     </div>
                     <div class="social-media">
                         <a href="#" class="social-icon"><i class="fab fa-facebook"></i></a>
@@ -573,7 +596,7 @@
                 <div class="footer-contact">
                     <h4>Contáctanos</h4>
                     <p><i class="fas fa-map-marker-alt"></i> Sincelejo, Sucre, Colombia</p>
-                    <p><i class="fas fa-phone"></i> 300 272 7399 / 312 607 3546</p>
+                    <p><i class="fas fa-phone"></i> 300 272 7399</p>
                     <p><i class="fas fa-envelope"></i> info@saludyvida.com</p>
                 </div>
                 <div class="footer-newsletter">
