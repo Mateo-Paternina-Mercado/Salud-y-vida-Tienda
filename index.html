@@ -12,7 +12,7 @@
     <header>
         <div class="container">
             <div class="logo-container">
-                <img src="logo.png" alt="Salud y Vida Logo" class="logo">
+                <img src="SaludYVida.jpg" alt="Salud y Vida Logo" class="logo">
             </div>
             <nav>
                 <ul class="menu">
@@ -38,7 +38,7 @@
         </div>
     </header>
 
-    <!-- Admin Login Modal (Solo aparece cuando se hace clic en el botón admin) -->
+    <!-- Admin Login Modal -->
     <div class="modal" id="adminLoginModal">
         <div class="modal-content admin-login-content">
             <span class="close-modal">&times;</span>
@@ -65,7 +65,7 @@
         </div>
     </div>
 
-    <!-- Admin Dashboard Modal (Se muestra después del login exitoso) -->
+    <!-- Admin Dashboard Modal -->
     <div class="modal admin-dashboard-modal" id="adminDashboardModal">
         <div class="modal-content admin-dashboard-content">
             <div class="admin-header">
@@ -95,11 +95,6 @@
                 <button class="tab-btn" data-tab="stats">
                     <i class="fas fa-chart-bar"></i>
                     Estadísticas
-                </button>
-                <button class="tab-btn" data-tab="chat">
-                    <i class="fas fa-comments"></i>
-                    Chat Soporte
-                    <span id="admin-chat-badge" class="admin-chat-badge" style="display: none;">0</span>
                 </button>
             </div>
             
@@ -218,24 +213,6 @@
                             <h4>Stock Bajo</h4>
                             <p class="stat-number" id="low-stock">0</p>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Chat Tab -->
-            <div id="chat-tab" class="tab-content">
-                <div class="admin-section-header">
-                    <h3><i class="fas fa-comments"></i> Chat de Soporte</h3>
-                </div>
-                <div class="admin-chat-container">
-                    <div class="admin-chat-messages" id="admin-chat-messages">
-                        <!-- Chat messages will be loaded here -->
-                    </div>
-                    <div class="admin-chat-input">
-                        <input type="text" id="admin-chat-input" placeholder="Responder al cliente...">
-                        <button id="admin-chat-send">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
                     </div>
                 </div>
             </div>
@@ -532,17 +509,45 @@
                     </select>
                 </div>
                 <div class="payment-details" id="nequiDetails">
-                    <p>Nequi: 300 272 7399</p>
-                    <div class="form-group">
-                        <label for="nequi-confirmation">Número de confirmación</label>
-                        <input type="text" id="nequi-confirmation" name="nequi-confirmation">
+                    <div class="payment-info-card">
+                        <h4><i class="fas fa-mobile-alt"></i> Pago con Nequi</h4>
+                        <p><strong>Número Nequi:</strong> 300 272 7399</p>
+                        <p><strong>Nombre:</strong> Salud y Vida</p>
+                        <div class="payment-steps">
+                            <p><strong>Pasos para pagar:</strong></p>
+                            <ol>
+                                <li>Abre tu app Nequi</li>
+                                <li>Selecciona "Enviar dinero"</li>
+                                <li>Ingresa el número: 300 272 7399</li>
+                                <li>Envía el monto total</li>
+                                <li>Copia el código de confirmación aquí</li>
+                            </ol>
+                        </div>
+                        <div class="form-group">
+                            <label for="nequi-confirmation">Código de confirmación de Nequi</label>
+                            <input type="text" id="nequi-confirmation" name="nequi-confirmation" placeholder="Ej: NQ123456789">
+                        </div>
                     </div>
                 </div>
                 <div class="payment-details" id="bancolombiaDetails">
-                    <p>Bancolombia: Cuenta Ahorros 123-456789-00</p>
-                    <div class="form-group">
-                        <label for="bancolombia-confirmation">Número de confirmación</label>
-                        <input type="text" id="bancolombia-confirmation" name="bancolombia-confirmation">
+                    <div class="payment-info-card">
+                        <h4><i class="fas fa-university"></i> Pago con Bancolombia</h4>
+                        <p><strong>Cuenta Ahorros:</strong> 123-456789-00</p>
+                        <p><strong>Titular:</strong> Salud y Vida</p>
+                        <div class="payment-steps">
+                            <p><strong>Pasos para pagar:</strong></p>
+                            <ol>
+                                <li>Ingresa a tu app Bancolombia</li>
+                                <li>Selecciona "Transferir"</li>
+                                <li>Cuenta destino: 123-456789-00</li>
+                                <li>Transfiere el monto total</li>
+                                <li>Copia el código de confirmación aquí</li>
+                            </ol>
+                        </div>
+                        <div class="form-group">
+                            <label for="bancolombia-confirmation">Código de confirmación de Bancolombia</label>
+                            <input type="text" id="bancolombia-confirmation" name="bancolombia-confirmation" placeholder="Ej: BC987654321">
+                        </div>
                     </div>
                 </div>
                 <div class="order-summary">
@@ -581,7 +586,7 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-logo">
-                    <img src="logo.png" alt="Salud y Vida Logo">
+                    <img src="SaludYVida.jpg" alt="Salud y Vida Logo">
                     <p>Distribuidora de Productos Naturales</p>
                 </div>
                 <div class="footer-links">
