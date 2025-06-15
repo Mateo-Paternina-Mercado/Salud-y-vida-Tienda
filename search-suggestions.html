@@ -1,0 +1,108 @@
+<!-- Search Suggestions Component -->
+<div class="search-suggestions-container" id="searchSuggestionsContainer" style="display: none;">
+    <div class="search-suggestions">
+        <div class="suggestions-header">
+            <h4>Sugerencias de búsqueda</h4>
+        </div>
+        <div class="suggestions-list" id="suggestionsList">
+            <!-- Las sugerencias se cargarán dinámicamente -->
+        </div>
+        <div class="search-history" id="searchHistory" style="display: none;">
+            <h5>Búsquedas recientes</h5>
+            <div class="history-list" id="historyList">
+                <!-- El historial se cargará dinámicamente -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Advanced Filters Modal -->
+<div class="modal" id="advancedFiltersModal">
+    <div class="modal-content advanced-filters-content">
+        <span class="close-modal">&times;</span>
+        <h2><i class="fas fa-filter"></i> Filtros Avanzados</h2>
+        
+        <div class="filters-form">
+            <div class="filter-group">
+                <label for="filter-category">Categoría</label>
+                <select id="filter-category">
+                    <option value="all">Todas las categorías</option>
+                    <option value="vitaminas">Vitaminas</option>
+                    <option value="suplementos">Suplementos</option>
+                    <option value="hierbas">Hierbas Medicinales</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="filter-price-range">Rango de Precio</label>
+                <div class="price-range-container">
+                    <input type="range" id="filter-price-min" min="0" max="100000" step="1000" value="0">
+                    <input type="range" id="filter-price-max" min="0" max="100000" step="1000" value="100000">
+                    <div class="price-display">
+                        <span>$<span id="price-min-display">0</span></span>
+                        <span>-</span>
+                        <span>$<span id="price-max-display">100,000</span></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-group">
+                <label>Disponibilidad</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="filter-in-stock" checked>
+                        <span class="checkmark"></span>
+                        Solo productos en stock
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="filter-low-stock">
+                        <span class="checkmark"></span>
+                        Incluir productos con stock bajo
+                    </label>
+                </div>
+            </div>
+            
+            <div class="filter-group">
+                <label for="filter-sort">Ordenar por</label>
+                <select id="filter-sort">
+                    <option value="relevance">Relevancia</option>
+                    <option value="price-asc">Precio: Menor a Mayor</option>
+                    <option value="price-desc">Precio: Mayor a Menor</option>
+                    <option value="name-asc">Nombre: A-Z</option>
+                    <option value="name-desc">Nombre: Z-A</option>
+                    <option value="stock-desc">Mayor Stock</option>
+                </select>
+            </div>
+            
+            <div class="filters-actions">
+                <button type="button" class="btn-secondary" id="clearFiltersBtn">
+                    <i class="fas fa-times"></i>
+                    Limpiar Filtros
+                </button>
+                <button type="button" class="btn" id="applyFiltersBtn">
+                    <i class="fas fa-check"></i>
+                    Aplicar Filtros
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search Results Info -->
+<div class="search-results-info" id="searchResultsInfo" style="display: none;">
+    <div class="results-summary">
+        <span class="results-count" id="resultsCount">0</span>
+        <span class="results-text">productos encontrados</span>
+        <span class="search-query" id="searchQueryDisplay"></span>
+    </div>
+    <div class="results-actions">
+        <button class="btn-secondary" id="advancedFiltersBtn">
+            <i class="fas fa-filter"></i>
+            Filtros Avanzados
+        </button>
+        <button class="btn-secondary" id="clearSearchBtn">
+            <i class="fas fa-times"></i>
+            Limpiar Búsqueda
+        </button>
+    </div>
+</div>

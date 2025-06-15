@@ -12,7 +12,7 @@
     <header>
         <div class="container">
             <div class="logo-container">
-                <img src="SaludYVida.jpg" alt="Salud y Vida Logo" class="logo">
+                <img src="logo.png" alt="Salud y Vida Logo" class="logo">
             </div>
             <nav>
                 <ul class="menu">
@@ -371,11 +371,61 @@
         <div class="container">
             <h2 class="section-title">Nuestros Productos</h2>
             
+            <!-- Search Bar -->
+            <div class="search-container">
+                <div class="search-bar">
+                    <input type="text" id="product-search-input" placeholder="Buscar productos por nombre, categoría o descripción..." class="search-input">
+                    <button id="product-search-btn" class="search-btn">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <button id="clear-search-btn" class="clear-search-btn" style="display: none;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
             <div class="categories">
                 <button class="category-btn active" data-category="all">Todos</button>
                 <button class="category-btn" data-category="vitaminas">Vitaminas</button>
                 <button class="category-btn" data-category="suplementos">Suplementos</button>
                 <button class="category-btn" data-category="hierbas">Hierbas Medicinales</button>
+            </div>
+            
+            <!-- Search Suggestions Container -->
+            <div class="search-suggestions-container" id="searchSuggestionsContainer" style="display: none;">
+                <div class="search-suggestions">
+                    <div class="suggestions-header">
+                        <h4>Sugerencias de búsqueda</h4>
+                    </div>
+                    <div class="suggestions-list" id="suggestionsList">
+                        <!-- Las sugerencias se cargarán dinámicamente -->
+                    </div>
+                    <div class="search-history" id="searchHistory" style="display: none;">
+                        <h5>Búsquedas recientes</h5>
+                        <div class="history-list" id="historyList">
+                            <!-- El historial se cargarán dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Results Info -->
+            <div class="search-results-info" id="searchResultsInfo" style="display: none;">
+                <div class="results-summary">
+                    <span class="results-count" id="resultsCount">0</span>
+                    <span class="results-text">productos encontrados</span>
+                    <span class="search-query" id="searchQueryDisplay"></span>
+                </div>
+                <div class="results-actions">
+                    <button class="btn-secondary" id="advancedFiltersBtn">
+                        <i class="fas fa-filter"></i>
+                        Filtros Avanzados
+                    </button>
+                    <button class="btn-secondary" id="clearSearchBtn">
+                        <i class="fas fa-times"></i>
+                        Limpiar Búsqueda
+                    </button>
+                </div>
             </div>
             
             <div class="products-grid">
@@ -503,29 +553,34 @@
                     <label for="payment">Método de Pago</label>
                     <select id="payment" name="payment" required>
                         <option value="">Seleccione un método de pago</option>
-                        <option value="nequi">Nequi</option>
+                        <option value="nequi">Nequi (Pago Automático)</option>
                         <option value="bancolombia">Bancolombia</option>
                         <option value="efectivo">Efectivo (Contra entrega)</option>
                     </select>
                 </div>
                 <div class="payment-details" id="nequiDetails">
-                    <div class="payment-info-card">
-                        <h4><i class="fas fa-mobile-alt"></i> Pago con Nequi</h4>
-                        <p><strong>Número Nequi:</strong> 300 272 7399</p>
-                        <p><strong>Nombre:</strong> Salud y Vida</p>
-                        <div class="payment-steps">
-                            <p><strong>Pasos para pagar:</strong></p>
-                            <ol>
-                                <li>Abre tu app Nequi</li>
-                                <li>Selecciona "Enviar dinero"</li>
-                                <li>Ingresa el número: 300 272 7399</li>
-                                <li>Envía el monto total</li>
-                                <li>Copia el código de confirmación aquí</li>
-                            </ol>
-                        </div>
-                        <div class="form-group">
-                            <label for="nequi-confirmation">Código de confirmación de Nequi</label>
-                            <input type="text" id="nequi-confirmation" name="nequi-confirmation" placeholder="Ej: NQ123456789">
+                    <div class="payment-info-card nequi-card">
+                        <h4><i class="fas fa-mobile-alt"></i> Pago Automático con Nequi</h4>
+                        <div class="nequi-info">
+                            <p><strong>🔄 Pago Automático Activado</strong></p>
+                            <p>Al seleccionar Nequi, el pago se procesará automáticamente usando la API oficial de Nequi.</p>
+                            <div class="nequi-features">
+                                <div class="feature-item">
+                                    <i class="fas fa-shield-alt"></i>
+                                    <span>Pago Seguro</span>
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-bolt"></i>
+                                    <span>Procesamiento Instantáneo</span>
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Verificación Automática</span>
+                                </div>
+                            </div>
+                            <div class="nequi-note">
+                                <p><strong>Nota:</strong> Se te redirigirá a la plataforma segura de Nequi para completar el pago.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -586,7 +641,7 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-logo">
-                    <img src="SaludYVida.jpg" alt="Salud y Vida Logo">
+                    <img src="logo.png" alt="Salud y Vida Logo">
                     <p>Distribuidora de Productos Naturales</p>
                 </div>
                 <div class="footer-links">
@@ -617,6 +672,78 @@
             </div>
         </div>
     </footer>
+
+    <!-- Advanced Filters Modal -->
+    <div class="modal" id="advancedFiltersModal">
+        <div class="modal-content advanced-filters-content">
+            <span class="close-modal">&times;</span>
+            <h2><i class="fas fa-filter"></i> Filtros Avanzados</h2>
+            
+            <div class="filters-form">
+                <div class="filter-group">
+                    <label for="filter-category">Categoría</label>
+                    <select id="filter-category">
+                        <option value="all">Todas las categorías</option>
+                        <option value="vitaminas">Vitaminas</option>
+                        <option value="suplementos">Suplementos</option>
+                        <option value="hierbas">Hierbas Medicinales</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="filter-price-range">Rango de Precio</label>
+                    <div class="price-range-container">
+                        <input type="range" id="filter-price-min" min="0" max="100000" step="1000" value="0">
+                        <input type="range" id="filter-price-max" min="0" max="100000" step="1000" value="100000">
+                        <div class="price-display">
+                            <span>$<span id="price-min-display">0</span></span>
+                            <span>-</span>
+                            <span>$<span id="price-max-display">100,000</span></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Disponibilidad</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="filter-in-stock" checked>
+                            <span class="checkmark"></span>
+                            Solo productos en stock
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="filter-low-stock">
+                            <span class="checkmark"></span>
+                            Incluir productos con stock bajo
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="filter-sort">Ordenar por</label>
+                    <select id="filter-sort">
+                        <option value="relevance">Relevancia</option>
+                        <option value="price-asc">Precio: Menor a Mayor</option>
+                        <option value="price-desc">Precio: Mayor a Menor</option>
+                        <option value="name-asc">Nombre: A-Z</option>
+                        <option value="name-desc">Nombre: Z-A</option>
+                        <option value="stock-desc">Mayor Stock</option>
+                    </select>
+                </div>
+                
+                <div class="filters-actions">
+                    <button type="button" class="btn-secondary" id="clearFiltersBtn">
+                        <i class="fas fa-times"></i>
+                        Limpiar Filtros
+                    </button>
+                    <button type="button" class="btn" id="applyFiltersBtn">
+                        <i class="fas fa-check"></i>
+                        Aplicar Filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
